@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Person Silhouette Configurator</title>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --panel: #ffffff;
+    --ink: #111111;
+    --muted: #6b6b6b;
+    --line: #e5e1d7;
+    --accent: #111111;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  .app {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    min-height: 100vh;
+  }
+  .sidebar {
+    background: var(--panel);
+    padding: 24px 22px;
+    overflow-y: auto;
+    max-height: 100vh;
+    position: sticky;
+    top: 0;
+  }
+  .sidebar h1 {
+    margin: 0 0 4px;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .sidebar .sub {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 22px;
+  }
+  .group {
+    padding: 14px 0 10px;
+  }
+  .group:first-of-type { padding-top: 4px; }
+  .group h2 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 0 14px;
+    font-weight: 600;
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 12px;
+  }
+  .row label {
+    font-size: 13px;
+    flex: 0 0 110px;
+    color: var(--ink);
+  }
+  .row input[type=range] {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 2px;
+    background: #d8d3c6;
+    border-radius: 2px;
+    outline: none;
+  }
+  .row input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--ink);
+    cursor: pointer;
+    border: none;
+  }
+  .row .val {
+    flex: 0 0 38px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .btn {
+    border: none;
+    background: #ece8de;
+    color: var(--ink);
+    padding: 11px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .btn:hover { background: #dfdacb; }
+  .btn.primary { background: var(--ink); color: var(--panel); }
+  .btn.primary:hover { background: #333; }
+  .btn.full { grid-column: span 2; }
+
+  .stage {
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .preview {
+    background: var(--panel);
+    border-radius: 14px;
+    height: 460px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .preview #mainSvg { height: 75%; display: flex; align-items: center; justify-content: center; }
+  .preview #mainSvg svg { height: 100%; width: auto; display: block; }
+  .preview .seed {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-size: 11px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .gallery {
+    background: var(--panel);
+    border-radius: 14px;
+    padding: 22px;
+  }
+  .gallery-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+  .gallery-head h3 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 10px;
+  }
+  .cell {
+    aspect-ratio: 1 / 1.6;
+    background: #faf8f3;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    padding: 8px;
+  }
+  .cell:hover { background: #f1ede3; transform: translateY(-2px); }
+  .cell svg { height: 100%; width: auto; }
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { position: relative; max-height: none; }
+    .grid { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h1>Person Silhouette</h1>
+    <div class="sub">Procedural generator · adjust or randomize</div>
+
+    <div class="group">
+      <h2>Head</h2>
+      <div class="row"><label>Width</label><input type="range" id="headW" min="14" max="38" step="0.5" value="23"/><span class="val" id="headW-v"></span></div>
+      <div class="row"><label>Height</label><input type="range" id="headH" min="12" max="32" step="0.5" value="17"/><span class="val" id="headH-v"></span></div>
+      <div class="row"><label>Roundness</label><input type="range" id="headR" min="0" max="1" step="0.01" value="0.6"/><span class="val" id="headR-v"></span></div>
+      <div class="row"><label>Tilt</label><input type="range" id="headTilt" min="-25" max="25" step="1" value="-3"/><span class="val" id="headTilt-v"></span></div>
+      <div class="row"><label>X offset</label><input type="range" id="headX" min="-8" max="8" step="0.5" value="1"/><span class="val" id="headX-v"></span></div>
+      <div class="row"><label>Asymmetry</label><input type="range" id="headAsym" min="-1" max="1" step="0.01" value="0.2"/><span class="val" id="headAsym-v"></span></div>
+    </div>
+
+    <div class="group">
+      <h2>Neck / Gap</h2>
+      <div class="row"><label>Gap</label><input type="range" id="gap" min="0" max="6" step="0.25" value="1.7"/><span class="val" id="gap-v"></span></div>
+    </div>
+
+    <div class="group">
+      <h2>Body</h2>
+      <div class="row"><label>Height</label><input type="range" id="bodyH" min="40" max="100" step="1" value="67"/><span class="val" id="bodyH-v"></span></div>
+      <div class="row"><label>Top width</label><input type="range" id="bodyTopW" min="10" max="40" step="0.5" value="20"/><span class="val" id="bodyTopW-v"></span></div>
+      <div class="row"><label>Mid width</label><input type="range" id="bodyMidW" min="14" max="48" step="0.5" value="29"/><span class="val" id="bodyMidW-v"></span></div>
+      <div class="row"><label>Bottom width</label><input type="range" id="bodyBotW" min="10" max="44" step="0.5" value="26"/><span class="val" id="bodyBotW-v"></span></div>
+      <div class="row"><label>Belly bias</label><input type="range" id="bodyBelly" min="0.25" max="0.75" step="0.01" value="0.55"/><span class="val" id="bodyBelly-v"></span></div>
+      <div class="row"><label>Curvature</label><input type="range" id="bodyCurve" min="0.2" max="1" step="0.01" value="0.6"/><span class="val" id="bodyCurve-v"></span></div>
+      <div class="row"><label>Lean</label><input type="range" id="bodyLean" min="-8" max="8" step="0.5" value="0"/><span class="val" id="bodyLean-v"></span></div>
+      <div class="row"><label>Asymmetry</label><input type="range" id="bodyAsym" min="-1" max="1" step="0.01" value="-0.2"/><span class="val" id="bodyAsym-v"></span></div>
+    </div>
+
+    <div class="group">
+      <h2>Style</h2>
+      <div class="row"><label>Color</label>
+        <input type="color" id="color" value="#000000" style="flex:1; height:28px; border:none; background:transparent; cursor:pointer;"/>
+        <span class="val"></span>
+      </div>
+      <div class="row"><label>Noise</label><input type="range" id="noise" min="0" max="1" step="0.01" value="0.25"/><span class="val" id="noise-v"></span></div>
+    </div>
+
+    <div class="group">
+      <div class="actions">
+        <button class="btn primary full" id="randomize">Randomize</button>
+        <button class="btn" id="regen">New gallery</button>
+        <button class="btn" id="reset">Reset</button>
+        <button class="btn full" id="copy">Copy SVG</button>
+        <button class="btn full" id="download">Download SVG</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="stage">
+    <div class="preview">
+      <span class="seed" id="seedLabel">seed: —</span>
+      <div id="mainSvg"></div>
+    </div>
+
+    <div class="gallery">
+      <div class="gallery-head">
+        <h3>Random gallery — click any to load</h3>
+        <button class="btn" id="regen2" style="padding:6px 10px; font-size:11px;">Refresh</button>
+      </div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ---- seeded random (mulberry32) ----
+function mulberry32(seed) {
+  return function() {
+    let t = seed += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+// ---- parameter defs ----
+const PARAMS = [
+  'headW','headH','headR','headTilt','headX','headAsym',
+  'gap',
+  'bodyH','bodyTopW','bodyMidW','bodyBotW','bodyBelly','bodyCurve','bodyLean','bodyAsym',
+  'noise'
+];
+
+const DEFAULTS = {
+  headW: 23, headH: 17, headR: 0.6, headTilt: -3, headX: 1, headAsym: 0.2,
+  gap: 1.7,
+  bodyH: 67, bodyTopW: 20, bodyMidW: 29, bodyBotW: 26, bodyBelly: 0.55,
+  bodyCurve: 0.6, bodyLean: 0, bodyAsym: -0.2,
+  noise: 0.25,
+  color: '#000000'
+};
+
+function getParams() {
+  const p = {};
+  PARAMS.forEach(k => p[k] = parseFloat(document.getElementById(k).value));
+  p.color = document.getElementById('color').value;
+  return p;
+}
+
+function setParams(p) {
+  PARAMS.forEach(k => {
+    if (p[k] !== undefined) {
+      const el = document.getElementById(k);
+      el.value = p[k];
+      document.getElementById(k + '-v').textContent = formatVal(p[k]);
+    }
+  });
+  if (p.color) document.getElementById('color').value = p.color;
+}
+
+function formatVal(v) {
+  if (Math.abs(v) >= 10) return v.toFixed(0);
+  if (Math.abs(v) >= 1) return v.toFixed(1);
+  return v.toFixed(2);
+}
+
+// ---- shape generation ----
+// Closed uniform cubic B-spline → cubic-bezier path.
+// B-splines are G2 (curvature continuous), so the perimeter has no perceptible corners.
+// Note: the curve passes near, not through, the control points.
+function smoothClosedPath(points) {
+  const n = points.length;
+  const f = (v) => v.toFixed(2);
+  const p = (i) => points[((i % n) + n) % n];
+
+  // Bezier endpoint between control points p(i) and p(i+1):
+  const seg = (i) => ({
+    start: { x: (p(i-1).x + 4*p(i).x + p(i+1).x) / 6, y: (p(i-1).y + 4*p(i).y + p(i+1).y) / 6 },
+    cp1:   { x: (2*p(i).x + p(i+1).x) / 3,            y: (2*p(i).y + p(i+1).y) / 3 },
+    cp2:   { x: (p(i).x + 2*p(i+1).x) / 3,            y: (p(i).y + 2*p(i+1).y) / 3 },
+    end:   { x: (p(i).x + 4*p(i+1).x + p(i+2).x) / 6, y: (p(i).y + 4*p(i+1).y + p(i+2).y) / 6 }
+  });
+
+  const first = seg(0);
+  let d = `M${f(first.start.x)} ${f(first.start.y)}`;
+  for (let i = 0; i < n; i++) {
+    const s = seg(i);
+    d += ` C${f(s.cp1.x)} ${f(s.cp1.y)} ${f(s.cp2.x)} ${f(s.cp2.y)} ${f(s.end.x)} ${f(s.end.y)}`;
+  }
+  return d + ' Z';
+}
+
+// B-spline shrinks the control polygon by ~cos²(π/n). Inflate to compensate.
+const BSPLINE_INFLATE = 1.18;
+
+// Build the head as a smooth irregular oval
+function headPath(p, rng) {
+  const cx = 14 + p.headX;
+  const cy = p.headH / 2;
+  const rx = p.headW / 2 * BSPLINE_INFLATE;
+  const ry = p.headH / 2 * BSPLINE_INFLATE;
+
+  // Head noise is intentionally gentler than body noise so the head always reads as a head.
+  const noise = (amt) => (rng() - 0.5) * 2 * amt * p.noise * 0.55;
+  const asym = p.headAsym;
+
+  // 8 control points around the perimeter
+  const steps = 8;
+  const pts = [];
+  for (let i = 0; i < steps; i++) {
+    const a = (i / steps) * Math.PI * 2 - Math.PI / 2;
+    const radiusBias = 0.85 + p.headR * 0.25;
+    // Reduced asymmetry coefficient — keeps the head roughly oval even at slider extremes.
+    const asymPush = 1 + asym * Math.cos(a) * 0.10;
+    const x = cx + Math.cos(a) * rx * radiusBias * asymPush + noise(0.9);
+    const y = cy + Math.sin(a) * ry * radiusBias + noise(0.7);
+    pts.push({ x, y });
+  }
+
+  // Tilt
+  const tilt = p.headTilt * Math.PI / 180;
+  const cos = Math.cos(tilt), sin = Math.sin(tilt);
+  pts.forEach(pt => {
+    const dx = pt.x - cx, dy = pt.y - cy;
+    pt.x = cx + dx * cos - dy * sin;
+    pt.y = cy + dx * sin + dy * cos;
+  });
+
+  return { d: smoothClosedPath(pts), bounds: pointsBounds(pts) };
+}
+
+function pointsBounds(pts) {
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const pt of pts) {
+    if (pt.x < minX) minX = pt.x;
+    if (pt.x > maxX) maxX = pt.x;
+    if (pt.y < minY) minY = pt.y;
+    if (pt.y > maxY) maxY = pt.y;
+  }
+  return { minX, maxX, minY, maxY };
+}
+
+// Build the body as a smooth closed blob — no corners, no flat edges.
+// Single cap points at top and bottom, side points sampled from a smooth width function.
+function bodyPath(p, rng, startY) {
+  const cx = 14 + p.bodyLean * 0.5;
+  const topY = startY;
+  const totalH = p.bodyH;
+  const botY = topY + totalH;
+
+  const noise = (amt) => (rng() - 0.5) * 2 * amt * p.noise;
+
+  const asymR = 1 - p.bodyAsym * 0.22;
+  const asymL = 1 + p.bodyAsym * 0.22;
+
+  // Curvature emphasizes the belly: >0.5 puffs it out, <0.5 flattens toward top/bottom.
+  const bellyEmph = 0.78 + p.bodyCurve * 0.45;
+  const tw = p.bodyTopW / 2 * BSPLINE_INFLATE;
+  const mw = p.bodyMidW / 2 * BSPLINE_INFLATE * bellyEmph;
+  const bw = p.bodyBotW / 2 * BSPLINE_INFLATE;
+  const belly = Math.max(0.25, Math.min(0.78, p.bodyBelly));
+
+  // Smooth width: smoothstep between top→belly→bottom widths.
+  function widthAt(t) {
+    if (t <= belly) {
+      const u = t / belly;
+      return tw + (mw - tw) * (u * u * (3 - 2 * u));
+    } else {
+      const u = (t - belly) / (1 - belly);
+      return mw + (bw - mw) * (u * u * (3 - 2 * u));
+    }
+  }
+
+  // Side sample positions. No corner points — sides go straight from cap to cap.
+  const tSide = [0.12, 0.30, belly, (belly + 0.88) / 2, 0.88];
+
+  const pts = [];
+  // Top cap
+  pts.push({ x: cx + noise(0.5), y: topY + noise(0.3) });
+  // Right side, top → bottom
+  for (const t of tSide) {
+    pts.push({
+      x: cx + widthAt(t) * asymR + noise(1.0),
+      y: topY + t * totalH + noise(1.0)
+    });
+  }
+  // Bottom cap
+  pts.push({ x: cx + noise(0.5), y: botY + noise(0.3) });
+  // Left side, bottom → top
+  for (let i = tSide.length - 1; i >= 0; i--) {
+    const t = tSide[i];
+    pts.push({
+      x: cx - widthAt(t) * asymL + noise(1.0),
+      y: topY + t * totalH + noise(1.0)
+    });
+  }
+
+  // Lean (top stays, bottom drifts)
+  const lean = p.bodyLean;
+  pts.forEach(pt => {
+    const t = (pt.y - topY) / totalH;
+    pt.x += lean * t;
+  });
+
+  return { d: smoothClosedPath(pts), bounds: pointsBounds(pts) };
+}
+
+// ---- viewBox calculation ----
+function buildSVG(p, seed, sizeAttr = '') {
+  const rng = mulberry32(seed);
+  const head = headPath(p, rng);
+  const bodyStart = head.bounds.maxY + p.gap;
+  const body = bodyPath(p, rng, bodyStart);
+
+  // Closed cubic B-splines stay inside the convex hull of their control points,
+  // so the union of both control polygons + a small visual margin is a safe viewBox.
+  const pad = 3;
+  const minX = Math.min(head.bounds.minX, body.bounds.minX) - pad;
+  const maxX = Math.max(head.bounds.maxX, body.bounds.maxX) + pad;
+  const minY = head.bounds.minY - pad;
+  const maxY = body.bounds.maxY + pad;
+  const vbW = maxX - minX;
+  const vbH = maxY - minY;
+
+  return `<svg ${sizeAttr} viewBox="${minX.toFixed(2)} ${minY.toFixed(2)} ${vbW.toFixed(2)} ${vbH.toFixed(2)}" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="${head.d}" fill="${p.color}"/>
+  <path d="${body.d}" fill="${p.color}"/>
+</svg>`;
+}
+
+// ---- rendering ----
+let currentSeed = Math.floor(Math.random() * 1e9);
+
+function render() {
+  const p = getParams();
+  document.getElementById('mainSvg').innerHTML = buildSVG(p, currentSeed);
+  document.getElementById('seedLabel').textContent = 'seed: ' + currentSeed;
+  // Update value displays
+  PARAMS.forEach(k => {
+    const v = parseFloat(document.getElementById(k).value);
+    document.getElementById(k + '-v').textContent = formatVal(v);
+  });
+}
+
+function renderGallery() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  const count = 16;
+  for (let i = 0; i < count; i++) {
+    const seed = Math.floor(Math.random() * 1e9);
+    const p = randomParams(seed);
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.innerHTML = buildSVG(p, seed);
+    cell.addEventListener('click', () => {
+      setParams(p);
+      currentSeed = seed;
+      render();
+    });
+    grid.appendChild(cell);
+  }
+}
+
+function randomParams(seed) {
+  const rng = mulberry32(seed + 12345);
+  const r = (min, max) => min + rng() * (max - min);
+  // Heads: width drives height by a controlled ratio so they always read as oval, never extreme.
+  const headW = r(22, 30);
+  const headH = headW * r(0.70, 0.88);
+  return {
+    headW,
+    headH,
+    headR:    r(0.55, 0.85),
+    headTilt: r(-8, 8),
+    headX:    r(-2.5, 2.5),
+    headAsym: r(-0.3, 0.3),
+    gap:      r(0, 4),
+    bodyH:    r(50, 90),
+    bodyTopW: r(12, 30),
+    bodyMidW: r(20, 42),
+    bodyBotW: r(14, 36),
+    bodyBelly: r(0.35, 0.7),
+    bodyCurve: r(0.4, 0.95),
+    bodyLean: r(-6, 6),
+    bodyAsym: r(-0.7, 0.7),
+    noise:    r(0.1, 0.5),
+    color:    '#000000'
+  };
+}
+
+// ---- event wiring ----
+PARAMS.forEach(k => {
+  document.getElementById(k).addEventListener('input', render);
+});
+document.getElementById('color').addEventListener('input', render);
+
+document.getElementById('randomize').addEventListener('click', () => {
+  currentSeed = Math.floor(Math.random() * 1e9);
+  setParams(randomParams(currentSeed));
+  render();
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+  setParams(DEFAULTS);
+  currentSeed = 1;
+  render();
+});
+
+document.getElementById('regen').addEventListener('click', renderGallery);
+document.getElementById('regen2').addEventListener('click', renderGallery);
+
+document.getElementById('copy').addEventListener('click', async () => {
+  const svg = buildSVG(getParams(), currentSeed);
+  await navigator.clipboard.writeText(svg);
+  const btn = document.getElementById('copy');
+  const orig = btn.textContent;
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = orig, 1200);
+});
+
+document.getElementById('download').addEventListener('click', () => {
+  const svg = buildSVG(getParams(), currentSeed);
+  const blob = new Blob([svg], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `person-${currentSeed}.svg`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ---- initial paint ----
+render();
+renderGallery();
+</script>
+</body>
+</html>
