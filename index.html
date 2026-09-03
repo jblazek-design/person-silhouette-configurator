@@ -1004,7 +1004,7 @@ renderGallery();
 
   // Light skin tones sit on a dark background so the figure stays visible.
   const RADIUS = 10; // corner radius in viewBox units (113 = full size)
-  function bgFor(toneIdx) { return toneIdx <= 1 ? INK : '#FFFFFF'; }
+  function bgFor(toneIdx) { return toneIdx <= 1 ? '#D6D6D6' : '#FFFFFF'; }
 
   // Full portrait SVG: rounded square. opts: { bg, size, radius }
   function portraitSvg(st, opts = {}) {
