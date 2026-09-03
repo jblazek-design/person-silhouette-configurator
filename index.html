@@ -3,37 +3,107 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Person Silhouette Configurator</title>
+<title>Peeple · Person Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f4f1ea;
-    --panel: #ffffff;
-    --ink: #111111;
-    --muted: #6b6b6b;
-    --line: #e5e1d7;
-    --accent: #111111;
+    /* Peeple theme tokens (Figma: Peeple / Colors) */
+    --bg: #F5F5F5;            /* BG/Wash */
+    --panel: #FFFFFF;         /* BG/Base */
+    --ink: #1B1D1A;           /* Text/Headings */
+    --muted: #6C6C71;         /* Tag/NeutralText ~ Text/Body */
+    --line: #EBEBEB;          /* Border/Tertiary */
+    --neutral: #EBEBE9;       /* BG/Neutral */
+    --disabled: #DEDEDE;      /* BG/Disabled */
+    --accent: #F7E730;        /* BG/CTAPrimary */
+    --accent-hover: #E5D52B;  /* BG/CTAPrimaryHover */
+    --accent-soft: #FEFBDD;   /* brand tint */
+    --accent-deep: #C5B507;   /* Text/Link */
+
+    /* shared chrome (Notion-Faces-like) */
+    --n-bg: var(--bg);
+    --n-panel: var(--panel);
+    --n-line: var(--line);
+    --n-line-strong: var(--disabled);
+    --n-text: var(--ink);
+    --n-text-muted: var(--muted);
+    --n-hover: var(--bg);
+    --n-active: var(--neutral);
+    --n-blue: var(--accent);
+    --n-blue-soft: var(--accent-soft);
+    --topbar-h: 56px;
+    --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   }
   * { box-sizing: border-box; }
   html, body {
     margin: 0;
     padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Helvetica, Arial, sans-serif;
+    font-family: var(--font);
     background: var(--bg);
     color: var(--ink);
     -webkit-font-smoothing: antialiased;
   }
+  button { font-family: inherit; }
+  [hidden] { display: none !important; }
+
+  /* ================= Top bar + tabs ================= */
+  .topbar {
+    position: sticky; top: 0; z-index: 30;
+    height: var(--topbar-h);
+    display: flex; align-items: center; gap: 14px;
+    padding: 0 18px;
+    background: var(--n-panel);
+    border-bottom: 1px solid var(--n-line);
+    color: var(--n-text);
+  }
+  .brand { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+  .brand svg { width: 26px; height: 26px; display: block; }
+  .tabs { display: flex; background: var(--n-hover); padding: 3px; border-radius: 9px; gap: 2px; }
+  .tab {
+    border: none; background: transparent; cursor: pointer;
+    padding: 6px 14px; border-radius: 6px;
+    font-size: 13px; font-weight: 500; color: var(--n-text-muted);
+    transition: background .15s, color .15s;
+  }
+  .tab:hover { color: var(--n-text); }
+  .tab[aria-selected="true"] { background: var(--n-panel); color: var(--n-text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+  /* generic Notion-ish buttons (portrait tab + save flow) */
+  .f-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    border: 1px solid var(--n-line-strong); background: var(--n-panel); color: var(--n-text);
+    padding: 9px 16px; border-radius: 999px; font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: background .15s, border-color .15s, box-shadow .15s;
+    line-height: 1;
+  }
+  .f-btn:hover { background: var(--n-hover); }
+  .f-btn svg { width: 16px; height: 16px; }
+  .f-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--ink); }
+  .f-btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .f-btn.square { border-radius: 8px; }
+  .f-btn.icon { width: 40px; height: 40px; padding: 0; }
+  .f-btn:disabled { opacity: .4; cursor: default; }
+  .f-btn:disabled:hover { background: var(--n-panel); }
+
+  .view { display: block; }
+
+  /* ================= Silhouette tab (original configurator) ================= */
   .app {
     display: grid;
     grid-template-columns: 360px 1fr;
-    min-height: 100vh;
+    min-height: calc(100vh - var(--topbar-h));
   }
   .sidebar {
     background: var(--panel);
+    border-right: 1px solid var(--line);
     padding: 24px 22px;
     overflow-y: auto;
-    max-height: 100vh;
+    max-height: calc(100vh - var(--topbar-h));
     position: sticky;
-    top: 0;
+    top: var(--topbar-h);
   }
   .sidebar h1 {
     margin: 0 0 4px;
@@ -74,7 +144,7 @@
     flex: 1;
     -webkit-appearance: none;
     height: 2px;
-    background: #d8d3c6;
+    background: var(--disabled);
     border-radius: 2px;
     outline: none;
   }
@@ -102,8 +172,8 @@
     margin-top: 8px;
   }
   .btn {
-    border: none;
-    background: #ece8de;
+    border: 1px solid var(--line);
+    background: var(--panel);
     color: var(--ink);
     padding: 11px 12px;
     font-size: 12px;
@@ -114,9 +184,9 @@
     transition: all 0.15s;
     font-family: inherit;
   }
-  .btn:hover { background: #dfdacb; }
-  .btn.primary { background: var(--ink); color: var(--panel); }
-  .btn.primary:hover { background: #333; }
+  .btn:hover { background: var(--bg); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--ink); }
+  .btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
   .btn.full { grid-column: span 2; }
 
   .stage {
@@ -127,7 +197,8 @@
   }
   .preview {
     background: var(--panel);
-    border-radius: 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
     height: 460px;
     display: flex;
     align-items: center;
@@ -146,7 +217,8 @@
   }
   .gallery {
     background: var(--panel);
-    border-radius: 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
     padding: 22px;
   }
   .gallery-head {
@@ -158,8 +230,7 @@
   .gallery-head h3 {
     margin: 0;
     font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.02em;
+    font-weight: 500;
   }
   .grid {
     display: grid;
@@ -168,8 +239,9 @@
   }
   .cell {
     aspect-ratio: 1 / 1.6;
-    background: #faf8f3;
-    border-radius: 10px;
+    background: var(--bg);
+    border: 1px solid transparent;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -177,16 +249,183 @@
     transition: all 0.15s;
     padding: 8px;
   }
-  .cell:hover { background: #f1ede3; transform: translateY(-2px); }
+  .cell:hover { background: var(--neutral); border-color: var(--line); transform: translateY(-2px); }
   .cell svg { height: 100%; width: auto; }
   @media (max-width: 900px) {
     .app { grid-template-columns: 1fr; }
-    .sidebar { position: relative; max-height: none; }
+    .sidebar { position: relative; max-height: none; top: 0; }
     .grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  /* ================= Portrait tab (Notion Faces-like) ================= */
+  .faces {
+    display: grid;
+    grid-template-columns: 224px 312px 1fr;
+    height: calc(100dvh - var(--topbar-h));
+    background: var(--n-bg);
+    color: var(--n-text);
+  }
+  .f-cats {
+    background: var(--n-panel);
+    border-right: 1px solid var(--n-line);
+    padding: 18px 10px 14px;
+    display: flex; flex-direction: column; min-height: 0;
+  }
+  .f-cats ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .f-cat {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 8px 10px; border-radius: 6px; border: none; background: none; cursor: pointer;
+    font-size: 14px; color: var(--n-text); text-align: left;
+    transition: background .12s;
+  }
+  .f-cat:hover { background: var(--n-hover); }
+  .f-cat[aria-current="true"] { background: var(--n-active); font-weight: 500; }
+  .f-cat svg { width: 18px; height: 18px; flex: 0 0 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .f-cats-foot { margin-top: auto; padding: 10px 10px 0; font-size: 12px; color: var(--n-text-muted); display: flex; flex-direction: column; gap: 8px; }
+  .f-cats-foot a { color: inherit; text-decoration: none; }
+  .f-cats-foot a:hover { color: var(--n-text); }
+
+  .f-drawer {
+    background: var(--n-panel);
+    border-right: 1px solid var(--n-line);
+    display: flex; flex-direction: column; min-height: 0;
+  }
+  .f-drawer-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 12px 12px 18px;
+  }
+  .f-drawer-head h2 { margin: 0; font-size: 14px; font-weight: 500; }
+  .f-iconbtn {
+    width: 32px; height: 32px; border-radius: 6px; border: none; background: none; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; color: var(--n-text);
+  }
+  .f-iconbtn:hover { background: var(--n-hover); }
+  .f-iconbtn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .f-iconbtn:disabled { opacity: .35; cursor: default; }
+  .f-iconbtn:disabled:hover { background: none; }
+  .f-tiles {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    padding: 0 16px 20px; overflow-y: auto; align-content: start;
+  }
+  .f-tile {
+    aspect-ratio: 1 / 1; padding: 0; border-radius: 8px; overflow: hidden; cursor: pointer;
+    border: 1px solid var(--n-line); background: var(--n-panel);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: var(--n-text-muted);
+    transition: border-color .12s, background .12s;
+  }
+  .f-tile:hover { border-color: #BDBDBA; }
+  .f-tile[aria-pressed="true"] { border-color: var(--accent-deep); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent-deep); }
+  .f-tile svg { width: 100%; height: 100%; display: block; }
+
+  .f-stage {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 28px; padding: 24px; min-height: 0;
+  }
+  .f-history { position: absolute; top: 14px; left: 14px; display: flex; gap: 2px; align-items: center; }
+  .f-history .f-iconbtn.text { width: auto; padding: 0 10px; font-size: 13px; gap: 6px; }
+  .f-circle {
+    width: min(440px, 62vh, 72vw); aspect-ratio: 1 / 1; border-radius: 50%;
+    background: #fff; border: 1px solid var(--line); box-shadow: 0 2px 12px rgba(0,0,0,.04); overflow: hidden;
+  }
+  .f-circle svg { width: 100%; height: 100%; display: block; }
+  .f-actions { display: flex; align-items: center; gap: 10px; }
+  .f-actions .f-btn.primary { padding: 12px 20px; font-size: 14px; }
+  .f-actions .f-btn.icon { width: 44px; height: 44px; }
+  .f-toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(8px);
+    background: var(--n-text); color: #fff; font-size: 13px; padding: 9px 14px; border-radius: 8px;
+    opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s; z-index: 50;
+  }
+  .f-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ================= Save flow ================= */
+  .save {
+    min-height: calc(100dvh - var(--topbar-h));
+    background: var(--n-bg); color: var(--n-text);
+    display: flex; justify-content: center; align-items: flex-start;
+    padding: 40px 20px 60px;
+  }
+  .save-card {
+    width: min(860px, 100%); background: var(--n-panel);
+    border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 8px 30px rgba(0,0,0,.04);
+    padding: 20px 24px 28px;
+  }
+  .save-head { display: grid; grid-template-columns: 40px 1fr 60px; align-items: center; margin-bottom: 20px; }
+  .save-head h2 { margin: 0; text-align: center; font-size: 18px; font-weight: 600; }
+  .save-head .link { justify-self: end; border: none; background: none; cursor: pointer; font-size: 13px; color: var(--n-text-muted); padding: 6px; }
+  .save-head .link:hover { color: var(--n-text); }
+  .save-step { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .save-preview {
+    background: var(--n-active); border-radius: 10px; overflow: hidden; aspect-ratio: 1 / 1;
+  }
+  .save-preview svg { width: 100%; height: 100%; display: block; }
+  .save-form { display: flex; flex-direction: column; gap: 18px; }
+  .save-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500; }
+  .save-form input {
+    font: inherit; font-size: 14px; padding: 9px 12px; border-radius: 8px;
+    border: 1px solid var(--n-line-strong); background: var(--n-panel); color: var(--n-text); outline: none;
+  }
+  .save-form input:focus { border-color: var(--accent-deep); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .save-form .withbtn { position: relative; }
+  .save-form .withbtn input { width: 100%; padding-right: 40px; }
+  .save-form .withbtn .f-iconbtn { position: absolute; right: 4px; bottom: 3px; }
+  .swatches { display: flex; gap: 10px; }
+  .swatch {
+    width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;
+    box-shadow: 0 0 0 1px rgba(0,0,0,.08) inset; padding: 0;
+  }
+  .swatch[aria-pressed="true"] { border-color: var(--n-text); box-shadow: 0 0 0 2px #fff inset; }
+  .save-form .f-btn.primary { margin-top: auto; border-radius: 8px; padding: 12px; font-size: 14px; }
+
+  .share-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .share-card h3 { margin: 12px 0 2px; font-size: 14px; font-weight: 600; }
+  .share-card p { margin: 0 0 12px; font-size: 12px; color: var(--n-text-muted); }
+  .share-card .row-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .share-card .f-btn { border-radius: 8px; padding: 9px 14px; }
+  .share-preview { border-radius: 10px; overflow: hidden; aspect-ratio: 1 / 1; background: var(--n-active); border: 1px solid var(--n-line); }
+  .share-preview svg { width: 100%; height: 100%; display: block; }
+
+  @media (max-width: 960px) {
+    .faces { grid-template-columns: 1fr; grid-template-rows: 1fr auto auto; }
+    .f-stage { order: 1; gap: 16px; padding: 16px; }
+    .f-history { top: 8px; left: 8px; }
+    .f-circle { width: min(300px, 40vh, 70vw); }
+    .f-drawer { order: 2; border-right: none; border-top: 1px solid var(--n-line); max-height: 36vh; }
+    .f-tiles { grid-template-columns: repeat(5, 1fr); }
+    .f-cats { order: 3; border-right: none; border-top: 1px solid var(--n-line); padding: 8px; flex-direction: row; }
+    .f-cats ul { flex-direction: row; overflow-x: auto; gap: 2px; width: 100%; }
+    .f-cat { flex-direction: column; gap: 4px; font-size: 11px; padding: 8px 10px; white-space: nowrap; }
+    .f-cats-foot { display: none; }
+    .save { padding: 16px 12px 40px; }
+    .save-step, .share-cards { grid-template-columns: 1fr; }
+    .tab { padding: 6px 10px; }
+  }
+  @media (max-width: 540px) {
+    .f-tiles { grid-template-columns: repeat(4, 1fr); }
+    .brand span { display: none; }
   }
 </style>
 </head>
 <body>
+
+<header class="topbar">
+  <div class="brand">
+    <svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="13" fill="#1B1D1A"/><path d="M13 7.2c2.3 0 3.6 1.5 3.6 3.3 0 1.9-1.6 3.1-3.6 3.1s-3.6-1.2-3.6-3.1c0-1.8 1.3-3.3 3.6-3.3Zm0 7.4c3.5 0 5.9 2.7 6.2 6.8-1.6 1.7-3.8 2.6-6.2 2.6s-4.6-.9-6.2-2.6c.3-4.1 2.7-6.8 6.2-6.8Z" fill="#fff"/></svg>
+    <span>Peeple</span>
+  </div>
+  <div class="tabs" role="tablist" aria-label="Generator mode">
+    <button class="tab" role="tab" id="tab-silhouette" aria-selected="true" aria-controls="view-silhouette">Silhouette</button>
+    <button class="tab" role="tab" id="tab-portrait" aria-selected="false" aria-controls="view-portrait">Portrait</button>
+  </div>
+  <div class="topbar-right">
+    <button class="f-btn" id="saveBtn" hidden>Save <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3l5 5-5 5"/></svg></button>
+  </div>
+</header>
+
+<!-- ================= Silhouette tab (original) ================= -->
+<section class="view" id="view-silhouette" role="tabpanel" aria-labelledby="tab-silhouette">
 <div class="app">
   <aside class="sidebar">
     <h1>Person Silhouette</h1>
@@ -254,8 +493,109 @@
     </div>
   </main>
 </div>
+</section>
 
+<!-- ================= Portrait tab ================= -->
+<section class="view faces" id="view-portrait" role="tabpanel" aria-labelledby="tab-portrait" hidden>
+  <nav class="f-cats" aria-label="Categories">
+    <ul id="catList"></ul>
+    <div class="f-cats-foot">
+      <a href="https://github.com/jblazek-design/person-silhouette-configurator" target="_blank" rel="noopener">Source on GitHub</a>
+      <span>Illustrations · Peeple</span>
+    </div>
+  </nav>
+
+  <aside class="f-drawer" aria-live="polite">
+    <div class="f-drawer-head">
+      <h2 id="drawerTitle">Eyes</h2>
+      <button class="f-iconbtn" id="catShuffle" title="Randomise this category" aria-label="Randomise this category">
+        <svg viewBox="0 0 24 24"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="m15 15 6 6"/><path d="m4 4 5 5"/></svg>
+      </button>
+    </div>
+    <div class="f-tiles" id="tiles"></div>
+  </aside>
+
+  <main class="f-stage">
+    <div class="f-history">
+      <button class="f-iconbtn" id="undoBtn" title="Undo" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+      <button class="f-iconbtn" id="redoBtn" title="Redo" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+      <button class="f-iconbtn text" id="clearBtn" title="Clear all"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>Clear all</button>
+    </div>
+
+    <div class="f-circle" id="portraitPreview"></div>
+
+    <div class="f-actions">
+      <button class="f-btn icon" id="shuffleAll" title="Shuffle everything" aria-label="Shuffle everything">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="m15 15 6 6"/><path d="m4 4 5 5"/></svg>
+      </button>
+      <button class="f-btn primary" id="newPortrait">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        New portrait
+      </button>
+    </div>
+  </main>
+  <div class="f-toast" id="toast" role="status"></div>
+</section>
+
+<!-- ================= Save flow ================= -->
+<section class="view save" id="view-save" hidden>
+  <div class="save-card">
+    <div class="save-head">
+      <button class="f-iconbtn" id="saveBack" title="Back" aria-label="Back"><svg viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></svg></button>
+      <h2 id="saveTitle">Customise your portrait</h2>
+      <button class="link" id="saveSkip">Skip ›</button>
+    </div>
+
+    <div class="save-step" id="saveStep1">
+      <div class="save-preview" id="cardPreview"></div>
+      <div class="save-form">
+        <label>Headline
+          <input id="cardName" type="text" placeholder="Name (optional)" maxlength="40" autocomplete="off">
+        </label>
+        <label>Caption
+          <div class="withbtn">
+            <input id="cardCaption" type="text" placeholder="Proudest of ___" maxlength="60" autocomplete="off">
+            <button class="f-iconbtn" id="captionShuffle" title="Shuffle caption" aria-label="Shuffle caption" type="button"><svg viewBox="0 0 24 24"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="m15 15 6 6"/><path d="m4 4 5 5"/></svg></button>
+          </div>
+        </label>
+        <div>
+          <div style="font-size:13px;font-weight:500;margin-bottom:8px">Background</div>
+          <div class="swatches" id="bgSwatches"></div>
+        </div>
+        <button class="f-btn primary" id="saveContinue">Continue</button>
+      </div>
+    </div>
+
+    <div class="share-cards" id="saveStep2" hidden>
+      <div class="share-card">
+        <div class="share-preview" id="shareCard"></div>
+        <h3>Customised</h3>
+        <p>For sharing on social media</p>
+        <div class="row-btns">
+          <button class="f-btn primary" data-dl="card-png">Download PNG</button>
+          <button class="f-btn" data-dl="card-svg">SVG</button>
+        </div>
+      </div>
+      <div class="share-card">
+        <div class="share-preview" id="sharePortrait"></div>
+        <h3>Portrait only</h3>
+        <p>Perfect for profile photos</p>
+        <div class="row-btns">
+          <button class="f-btn primary" data-dl="portrait-png">Download PNG</button>
+          <button class="f-btn" data-dl="portrait-svg">SVG</button>
+          <button class="f-btn" data-dl="portrait-copy">Copy SVG</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="parts.js"></script>
 <script>
+// =====================================================================
+// Silhouette tab — original procedural generator (unchanged logic)
+// =====================================================================
+(function () {
 // ---- seeded random (mulberry32) ----
 function mulberry32(seed) {
   return function() {
@@ -575,6 +915,396 @@ document.getElementById('download').addEventListener('click', () => {
 // ---- initial paint ----
 render();
 renderGallery();
+})();
+</script>
+
+<script>
+// =====================================================================
+// Portrait tab — layered illustration generator (Peeple / Figma parts)
+// =====================================================================
+(function () {
+  const P = window.PEEPLE_PARTS;
+  const $ = (id) => document.getElementById(id);
+
+  const INK = '#1B1D1A';
+  const NS = 'http://www.w3.org/2000/svg';
+  let clipSeq = 0;
+
+  // icons (16/24 grid, stroke)
+  const ICONS = {
+    skin: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18"/><circle cx="8.5" cy="10" r=".8" fill="currentColor"/><circle cx="12" cy="7" r=".8" fill="currentColor"/><circle cx="8" cy="14.5" r=".8" fill="currentColor"/></svg>',
+    eyes: '<svg viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
+    mouth: '<svg viewBox="0 0 24 24"><path d="M3 10c3 6 15 6 18 0"/><path d="M3 10c3 0 15 0 18 0"/></svg>',
+    beard: '<svg viewBox="0 0 24 24"><path d="M5 8c0 7 3 11 7 11s7-4 7-11"/><path d="M9 13c1 1 5 1 6 0"/></svg>',
+    hat: '<svg viewBox="0 0 24 24"><path d="M6 14V9a6 6 0 0 1 12 0v5"/><path d="M3 15h18"/><path d="M4 15c2 3 14 3 16 0"/></svg>',
+    accessory: '<svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/><path d="M19 17l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7Z"/></svg>',
+    hand: '<svg viewBox="0 0 24 24"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11"/><path d="M11 10V4.5a1.5 1.5 0 0 1 3 0V11"/><path d="M14 11V6.5a1.5 1.5 0 0 1 3 0V13"/><path d="M8 13l-1.6-2.4a1.5 1.5 0 0 0-2.5 1.6L7 17c1.5 3 3.5 4 6.5 4 3.5 0 6-2.5 6-6.5V13"/></svg>',
+    none: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m6.5 6.5 11 11"/></svg>'
+  };
+
+  const CATS = [
+    { key: 'skin',      label: 'Skin tone',   optional: false },
+    { key: 'eyes',      label: 'Eyes',        optional: true, noneChance: 0.03 },
+    { key: 'mouth',     label: 'Mouth',       optional: true, noneChance: 0.03 },
+    { key: 'beard',     label: 'Beard',       optional: true, noneChance: 0.45 },
+    { key: 'hat',       label: 'Hat',         optional: true, noneChance: 0.45 },
+    { key: 'accessory', label: 'Accessories', optional: true, noneChance: 0.4 },
+    { key: 'hand',      label: 'Hands',       optional: true, noneChance: 0.55 }
+  ];
+  const PART_CATS = CATS.filter(c => c.key !== 'skin').map(c => c.key);
+  // draw order: back → front
+  const LAYERS = ['beard', 'mouth', 'eyes', 'accessory', 'hat', 'hand'];
+
+  const BGS = [
+    { key: 'grey',   label: 'Grey',   color: '#EBEBE9', text: INK },
+    { key: 'yellow', label: 'Yellow', color: '#F7E730', text: INK },
+    { key: 'blue',   label: 'Blue',   color: '#3772FF', text: '#FFFFFF' },
+    { key: 'red',    label: 'Red',    color: '#BF3102', text: '#FFFFFF' },
+    { key: 'dark',   label: 'Dark',   color: '#1B1D1A', text: '#FFFFFF' }
+  ];
+  const CAPTIONS = [
+    'Proudest of ___', 'Currently obsessed with ___', 'Ask me about ___', 'Known for ___',
+    'Working on ___', 'Can\'t live without ___', 'Secretly good at ___', 'Team ___'
+  ];
+
+  // ---- state ----
+  const state = { skin: 2, eyes: 1, mouth: 1, beard: 0, hat: 0, accessory: 0, hand: 0 };
+  const card = { name: '', caption: '', bg: 'grey' };
+  let activeCat = 'eyes';
+  let history = [], future = [];
+
+  // ---- helpers ----
+  const rnd = (n) => Math.floor(Math.random() * n);
+  const partOf = (cat, n) => (n > 0 ? P.parts[cat][n - 1] : null);
+  function inkFor(toneIdx) {
+    // dark skin tones: white ink with a hairline dark outline so parts that reach past the
+    // figure (hats, hands) stay visible on light backgrounds.
+    if (toneIdx >= 4) {
+      return {
+        ink: `fill="#FFFFFF" stroke="${INK}" stroke-width="0.5" stroke-linejoin="round" paint-order="stroke"`,
+        paper: `fill="${INK}"`
+      };
+    }
+    return { ink: `fill="${INK}"`, paper: 'fill="#FFFFFF"' };
+  }
+  function layer(svg, palette) {
+    return svg.replace(/fill="__INK__"/g, palette.ink).replace(/fill="__PAPER__"/g, palette.paper);
+  }
+  function figure(color) { return P.figure.replace(/__SKIN__/g, color); }
+
+  function portraitBody(st) {
+    const palette = inkFor(st.skin);
+    let out = figure(P.tones[st.skin]);
+    for (const cat of LAYERS) {
+      const part = partOf(cat, st[cat]);
+      if (part) out += layer(part.svg, palette);
+    }
+    return out;
+  }
+
+  // Full portrait SVG. opts: { bg, shape:'circle'|'square', size }
+  function portraitSvg(st, opts = {}) {
+    const size = opts.size ? `width="${opts.size}" height="${opts.size}"` : '';
+    const shape = opts.shape || 'circle';
+    const bg = opts.bg || '#FFFFFF';
+    const cid = 'pc' + (++clipSeq);
+    const clip = shape === 'circle'
+      ? `<defs><clipPath id="${cid}"><circle cx="56.5" cy="56.5" r="56.5"/></clipPath></defs>`
+      : '';
+    const wrapOpen = shape === 'circle' ? `<g clip-path="url(#${cid})">` : '<g>';
+    const bgEl = shape === 'circle'
+      ? `<circle cx="56.5" cy="56.5" r="56.5" fill="${bg}"/>`
+      : `<rect width="113" height="113" fill="${bg}"/>`;
+    return `<svg xmlns="${NS}" viewBox="0 0 113 113" ${size}>${clip}${wrapOpen}${bgEl}${portraitBody(st)}</g></svg>`;
+  }
+
+  function tileSvg(cat, n) {
+    if (cat === 'skin') {
+      const bg = n <= 1 ? '#C7C7CC' : '#EBEBE9';
+      return `<svg xmlns="${NS}" viewBox="0 0 113 113"><rect width="113" height="113" fill="${bg}"/>${figure(P.tones[n])}</svg>`;
+    }
+    const part = partOf(cat, n);
+    const ghost = figure('#EFEFED');
+    return `<svg xmlns="${NS}" viewBox="0 0 113 113">${ghost}${layer(part.svg, { ink: `fill="${INK}"`, paper: 'fill="#FFFFFF"' })}</svg>`;
+  }
+
+  // Social card: 1080x1080, colored background, circle portrait, name + caption.
+  function cardSvg(st, c, size) {
+    const bg = BGS.find(b => b.key === c.bg) || BGS[0];
+    const name = escapeXml(c.name.trim());
+    const caption = escapeXml(c.caption.trim());
+    const hasText = name || caption;
+    const r = hasText ? 300 : 360;
+    const cy = hasText ? 440 : 540;
+    const portrait = portraitSvg(st, { shape: 'circle' })
+      .replace('<svg ', `<svg x="${540 - r}" y="${cy - r}" width="${r * 2}" height="${r * 2}" `);
+    const font = `font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"`;
+    const text = hasText ? `
+      ${name ? `<text x="540" y="${caption ? 850 : 880}" text-anchor="middle" ${font} font-size="60" font-weight="600" fill="${bg.text}">${name}</text>` : ''}
+      ${caption ? `<text x="540" y="${name ? 920 : 880}" text-anchor="middle" ${font} font-size="34" fill="${bg.text}" opacity="0.85">${caption}</text>` : ''}` : '';
+    const sizeAttr = size ? `width="${size}" height="${size}"` : '';
+    return `<svg xmlns="${NS}" viewBox="0 0 1080 1080" ${sizeAttr}><rect width="1080" height="1080" fill="${bg.color}"/><circle cx="540" cy="${cy}" r="${r + 10}" fill="#FFFFFF" opacity="0.35"/>${portrait}${text}</svg>`;
+  }
+  function escapeXml(s) { return s.replace(/[<>&"']/g, ch => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[ch])); }
+
+  // ---- history ----
+  function commit(patch) {
+    history.push({ ...state });
+    if (history.length > 100) history.shift();
+    future = [];
+    Object.assign(state, patch);
+    render();
+  }
+  function undo() { if (!history.length) return; future.push({ ...state }); Object.assign(state, history.pop()); render(); }
+  function redo() { if (!future.length) return; history.push({ ...state }); Object.assign(state, future.pop()); render(); }
+
+  // ---- randomisation ----
+  function randomPart(cat) {
+    const c = CATS.find(x => x.key === cat);
+    if (c.optional && Math.random() < c.noneChance) return 0;
+    return 1 + rnd(P.parts[cat].length);
+  }
+  function randomAll(includeSkin) {
+    const patch = {};
+    for (const cat of PART_CATS) patch[cat] = randomPart(cat);
+    if (includeSkin) patch.skin = rnd(P.tones.length);
+    // a face with neither eyes nor mouth looks broken — force eyes
+    if (!patch.eyes && !patch.mouth) patch.eyes = 1 + rnd(P.parts.eyes.length);
+    return patch;
+  }
+
+  // ---- URL state ----
+  function encodeState() {
+    return [state.skin, ...PART_CATS.map(k => state[k])].join('.');
+  }
+  function decodeState(code) {
+    const nums = String(code || '').split('.').map(n => parseInt(n, 10));
+    if (nums.length !== PART_CATS.length + 1 || nums.some(n => Number.isNaN(n))) return null;
+    const out = { skin: Math.min(Math.max(nums[0], 0), P.tones.length - 1) };
+    PART_CATS.forEach((k, i) => { out[k] = Math.min(Math.max(nums[i + 1], 0), P.parts[k].length); });
+    return out;
+  }
+
+  // ---- rendering ----
+  function render() {
+    $('portraitPreview').innerHTML = portraitSvg(state);
+    renderTiles();
+    $('undoBtn').disabled = history.length === 0;
+    $('redoBtn').disabled = future.length === 0;
+    if (currentTab === 'portrait') syncHash();
+  }
+
+  function renderCats() {
+    const ul = $('catList');
+    ul.innerHTML = '';
+    for (const c of CATS) {
+      const li = document.createElement('li');
+      const b = document.createElement('button');
+      b.className = 'f-cat';
+      b.innerHTML = ICONS[c.key] + '<span>' + c.label + '</span>';
+      b.setAttribute('aria-current', String(c.key === activeCat));
+      b.addEventListener('click', () => { activeCat = c.key; renderCats(); renderTiles(); });
+      li.appendChild(b);
+      ul.appendChild(li);
+    }
+    $('drawerTitle').textContent = CATS.find(c => c.key === activeCat).label;
+  }
+
+  function renderTiles() {
+    const wrap = $('tiles');
+    wrap.innerHTML = '';
+    const cat = CATS.find(c => c.key === activeCat);
+    const count = cat.key === 'skin' ? P.tones.length : P.parts[cat.key].length;
+    const frag = document.createDocumentFragment();
+    const mk = (n, label) => {
+      const b = document.createElement('button');
+      b.className = 'f-tile';
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(state[cat.key] === n));
+      b.setAttribute('aria-label', label);
+      b.title = label;
+      b.addEventListener('click', () => { if (state[cat.key] !== n) commit({ [cat.key]: n }); });
+      return b;
+    };
+    if (cat.optional) {
+      const none = mk(0, 'None');
+      none.textContent = 'None';
+      frag.appendChild(none);
+    }
+    for (let n = cat.key === 'skin' ? 0 : 1; n < (cat.key === 'skin' ? count : count + 1); n++) {
+      const t = mk(n, `${cat.label} ${cat.key === 'skin' ? n + 1 : n}`);
+      t.innerHTML = tileSvg(cat.key, n);
+      frag.appendChild(t);
+    }
+    wrap.appendChild(frag);
+    $('drawerTitle').textContent = cat.label;
+  }
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
+  }
+
+  // ---- export helpers ----
+  function download(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  function svgToPng(svg, size) {
+    return new Promise((resolve, reject) => {
+      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = c.height = size;
+        c.getContext('2d').drawImage(img, 0, 0, size, size);
+        URL.revokeObjectURL(url);
+        c.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png');
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('svg load failed')); };
+      img.src = url;
+    });
+  }
+  const slug = () => 'peeple-' + encodeState().replace(/\./g, '-');
+
+  // ---- save flow ----
+  let saveStep = 1;
+  function openSave() {
+    saveStep = 1;
+    showView('save');
+    renderSave();
+  }
+  function renderSave() {
+    $('saveStep1').hidden = saveStep !== 1;
+    $('saveStep2').hidden = saveStep !== 2;
+    $('saveTitle').textContent = saveStep === 1 ? 'Customise your portrait' : 'Download and share';
+    $('saveSkip').hidden = saveStep !== 1;
+    if (saveStep === 1) {
+      $('cardName').value = card.name;
+      $('cardCaption').value = card.caption;
+      $('cardPreview').innerHTML = cardSvg(state, card);
+      const sw = $('bgSwatches');
+      sw.innerHTML = '';
+      for (const b of BGS) {
+        const s = document.createElement('button');
+        s.className = 'swatch'; s.type = 'button';
+        s.style.background = b.color;
+        s.title = b.label; s.setAttribute('aria-label', b.label);
+        s.setAttribute('aria-pressed', String(card.bg === b.key));
+        s.addEventListener('click', () => { card.bg = b.key; renderSave(); });
+        sw.appendChild(s);
+      }
+    } else {
+      $('shareCard').innerHTML = cardSvg(state, card);
+      $('sharePortrait').innerHTML = portraitSvg(state, { shape: 'circle', bg: '#FFFFFF' });
+    }
+  }
+  $('cardName').addEventListener('input', e => { card.name = e.target.value; $('cardPreview').innerHTML = cardSvg(state, card); });
+  $('cardCaption').addEventListener('input', e => { card.caption = e.target.value; $('cardPreview').innerHTML = cardSvg(state, card); });
+  $('captionShuffle').addEventListener('click', () => {
+    const others = CAPTIONS.filter(c => c !== card.caption);
+    card.caption = others[rnd(others.length)];
+    $('cardCaption').value = card.caption;
+    $('cardPreview').innerHTML = cardSvg(state, card);
+  });
+  $('saveContinue').addEventListener('click', () => { saveStep = 2; renderSave(); });
+  $('saveSkip').addEventListener('click', () => { saveStep = 2; renderSave(); });
+  $('saveBack').addEventListener('click', () => {
+    if (saveStep === 2) { saveStep = 1; renderSave(); }
+    else showView('portrait');
+  });
+  $('saveStep2').addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-dl]');
+    if (!btn) return;
+    const kind = btn.dataset.dl;
+    try {
+      if (kind === 'card-png') download(await svgToPng(cardSvg(state, card, 1080), 1080), slug() + '-card.png');
+      if (kind === 'card-svg') download(new Blob([cardSvg(state, card)], { type: 'image/svg+xml' }), slug() + '-card.svg');
+      if (kind === 'portrait-png') download(await svgToPng(portraitSvg(state, { size: 1024, bg: '#FFFFFF' }), 1024), slug() + '.png');
+      if (kind === 'portrait-svg') download(new Blob([portraitSvg(state, { bg: '#FFFFFF' })], { type: 'image/svg+xml' }), slug() + '.svg');
+      if (kind === 'portrait-copy') {
+        await navigator.clipboard.writeText(portraitSvg(state, { bg: '#FFFFFF' }));
+        const orig = btn.textContent; btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = orig, 1200);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Export failed: ' + err.message);
+    }
+  });
+
+  // ---- portrait controls ----
+  $('catShuffle').addEventListener('click', () => {
+    const cat = activeCat;
+    let n;
+    if (cat === 'skin') { do { n = rnd(P.tones.length); } while (n === state.skin && P.tones.length > 1); }
+    else { do { n = randomPart(cat); } while (n === state[cat]); }
+    commit({ [cat]: n });
+  });
+  $('shuffleAll').addEventListener('click', () => commit(randomAll(false)));
+  $('newPortrait').addEventListener('click', () => commit(randomAll(true)));
+  $('undoBtn').addEventListener('click', undo);
+  $('redoBtn').addEventListener('click', redo);
+  $('clearBtn').addEventListener('click', () => commit({ skin: 2, eyes: 0, mouth: 0, beard: 0, hat: 0, accessory: 0, hand: 0 }));
+  $('saveBtn').addEventListener('click', openSave);
+
+  document.addEventListener('keydown', (e) => {
+    if (currentTab !== 'portrait') return;
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea') return;
+    const mod = e.metaKey || e.ctrlKey;
+    if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+    else if (!mod && e.key.toLowerCase() === 'r') { commit(randomAll(false)); }
+  });
+
+  // ---- tabs / views ----
+  let currentTab = 'silhouette';
+  const views = { silhouette: $('view-silhouette'), portrait: $('view-portrait'), save: $('view-save') };
+  function showView(name) {
+    for (const k in views) views[k].hidden = k !== name;
+    const tab = name === 'save' ? 'portrait' : name;
+    currentTab = tab;
+    $('tab-silhouette').setAttribute('aria-selected', String(tab === 'silhouette'));
+    $('tab-portrait').setAttribute('aria-selected', String(tab === 'portrait'));
+    $('saveBtn').hidden = name !== 'portrait';
+    document.body.style.background = tab === 'portrait' ? 'var(--n-bg)' : 'var(--bg)';
+    syncHash();
+    window.scrollTo(0, 0);
+  }
+  function syncHash() {
+    const h = currentTab === 'portrait' ? '#portrait=' + encodeState() : '#silhouette';
+    if (location.hash !== h) history_replace(h);
+  }
+  function history_replace(h) { try { window.history.replaceState(null, '', h); } catch (_) { location.hash = h; } }
+  function applyHash() {
+    const h = location.hash.slice(1);
+    if (h.startsWith('portrait')) {
+      const code = h.split('=')[1];
+      const st = decodeState(code);
+      if (st) Object.assign(state, st);
+      else Object.assign(state, randomAll(true));
+      showView('portrait');
+    } else if (h === 'silhouette' || h === '') {
+      if (h === '') Object.assign(state, randomAll(true));
+      showView('silhouette');
+    }
+  }
+  $('tab-silhouette').addEventListener('click', () => showView('silhouette'));
+  $('tab-portrait').addEventListener('click', () => showView('portrait'));
+  window.addEventListener('hashchange', () => { applyHash(); render(); });
+
+  // ---- init ----
+  Object.assign(state, randomAll(true));
+  renderCats();
+  applyHash();
+  render();
+})();
 </script>
 </body>
 </html>
