@@ -44,8 +44,8 @@ for (const cat of CATEGORIES) {
     let svg = inner(fs.readFileSync(path.join(SRC, name + '.svg'), 'utf8'));
     if (cat === 'hand') {
       // Hand frames include a redrawn body silhouette painted in ink; it must follow the skin tone.
-      svg = svg.replace(/(<path d="M83\.2212 109\.793C81\.6418[^>]*?)fill="__INK__"/, '$1fill="__SKIN__"');
-      if (!svg.includes('__SKIN__')) throw new Error(name + ': body path not found');
+      // Hands (and the body redrawn inside the frame) are always the skin colour.
+      svg = svg.replace(/fill="__INK__"/g, 'fill="__SKIN__"');
     }
     return { id: name, svg };
   });
