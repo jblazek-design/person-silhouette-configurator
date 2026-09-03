@@ -40,7 +40,15 @@ const files = fs.readdirSync(SRC).filter(f => f.endsWith('.svg'));
 const parts = {};
 for (const cat of CATEGORIES) {
   const names = files.filter(f => f.startsWith(cat + '-')).map(f => f.replace('.svg', '')).sort(numericSort);
-  parts[cat] = names.map(name => ({ id: name, svg: inner(fs.readFileSync(path.join(SRC, name + '.svg'), 'utf8')) }));
+  parts[cat] = names.map(name => {
+    let svg = inner(fs.readFileSync(path.join(SRC, name + '.svg'), 'utf8'));
+    if (cat === 'hand') {
+      // Hand frames include a redrawn body silhouette painted in ink; it must follow the skin tone.
+      svg = svg.replace(/(<path d="M83\.2212 109\.793C81\.6418[^>]*?)fill="__INK__"/, '$1fill="__SKIN__"');
+      if (!svg.includes('__SKIN__')) throw new Error(name + ': body path not found');
+    }
+    return { id: name, svg };
+  });
 }
 
 // Figure (head + body) shared by all skin tones — take it from skin-0 (white figure) and

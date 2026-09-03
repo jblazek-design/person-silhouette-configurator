@@ -987,8 +987,8 @@ renderGallery();
     }
     return { ink: `fill="${INK}"`, paper: 'fill="#FFFFFF"' };
   }
-  function layer(svg, palette) {
-    return svg.replace(/fill="__INK__"/g, palette.ink).replace(/fill="__PAPER__"/g, palette.paper);
+  function layer(svg, palette, skin) {
+    return svg.replace(/fill="__INK__"/g, palette.ink).replace(/fill="__PAPER__"/g, palette.paper).replace(/__SKIN__/g, skin || '#EFEFED');
   }
   function figure(color) { return P.figure.replace(/__SKIN__/g, color); }
 
@@ -997,7 +997,7 @@ renderGallery();
     let out = figure(P.tones[st.skin]);
     for (const cat of LAYERS) {
       const part = partOf(cat, st[cat]);
-      if (part) out += layer(part.svg, palette);
+      if (part) out += layer(part.svg, palette, P.tones[st.skin]);
     }
     return out;
   }
