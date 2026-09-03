@@ -326,8 +326,8 @@
   .f-history { position: absolute; top: 14px; left: 14px; display: flex; gap: 2px; align-items: center; }
   .f-history .f-iconbtn.text { width: auto; padding: 0 10px; font-size: 13px; gap: 6px; }
   .f-circle {
-    width: min(440px, 62vh, 72vw); aspect-ratio: 1 / 1; border-radius: 50%;
-    background: #fff; border: 1px solid var(--line); box-shadow: 0 2px 12px rgba(0,0,0,.04); overflow: hidden;
+    width: min(440px, 62vh, 72vw); aspect-ratio: 1 / 1; border-radius: 8.85%;
+    background: transparent; box-shadow: 0 2px 12px rgba(0,0,0,.05); overflow: hidden;
   }
   .f-circle svg { width: 100%; height: 100%; display: block; }
   .f-actions { display: flex; align-items: center; gap: 10px; }
@@ -1002,20 +1002,18 @@ renderGallery();
     return out;
   }
 
-  // Full portrait SVG. opts: { bg, shape:'circle'|'square', size }
+  // Light skin tones sit on a dark background so the figure stays visible.
+  const RADIUS = 10; // corner radius in viewBox units (113 = full size)
+  function bgFor(toneIdx) { return toneIdx <= 1 ? INK : '#FFFFFF'; }
+
+  // Full portrait SVG: rounded square. opts: { bg, size, radius }
   function portraitSvg(st, opts = {}) {
     const size = opts.size ? `width="${opts.size}" height="${opts.size}"` : '';
-    const shape = opts.shape || 'circle';
-    const bg = opts.bg || '#FFFFFF';
+    const bg = opts.bg || bgFor(st.skin);
+    const r = opts.radius == null ? RADIUS : opts.radius;
     const cid = 'pc' + (++clipSeq);
-    const clip = shape === 'circle'
-      ? `<defs><clipPath id="${cid}"><circle cx="56.5" cy="56.5" r="56.5"/></clipPath></defs>`
-      : '';
-    const wrapOpen = shape === 'circle' ? `<g clip-path="url(#${cid})">` : '<g>';
-    const bgEl = shape === 'circle'
-      ? `<circle cx="56.5" cy="56.5" r="56.5" fill="${bg}"/>`
-      : `<rect width="113" height="113" fill="${bg}"/>`;
-    return `<svg xmlns="${NS}" viewBox="0 0 113 113" ${size}>${clip}${wrapOpen}${bgEl}${portraitBody(st)}</g></svg>`;
+    const clip = `<defs><clipPath id="${cid}"><rect width="113" height="113" rx="${r}"/></clipPath></defs>`;
+    return `<svg xmlns="${NS}" viewBox="0 0 113 113" ${size}>${clip}<g clip-path="url(#${cid})"><rect width="113" height="113" fill="${bg}"/>${portraitBody(st)}</g></svg>`;
   }
 
   function tileSvg(cat, n) {
@@ -1036,14 +1034,14 @@ renderGallery();
     const hasText = name || caption;
     const r = hasText ? 300 : 360;
     const cy = hasText ? 440 : 540;
-    const portrait = portraitSvg(st, { shape: 'circle' })
+    const portrait = portraitSvg(st)
       .replace('<svg ', `<svg x="${540 - r}" y="${cy - r}" width="${r * 2}" height="${r * 2}" `);
     const font = `font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"`;
     const text = hasText ? `
       ${name ? `<text x="540" y="${caption ? 850 : 880}" text-anchor="middle" ${font} font-size="60" font-weight="600" fill="${bg.text}">${name}</text>` : ''}
       ${caption ? `<text x="540" y="${name ? 920 : 880}" text-anchor="middle" ${font} font-size="34" fill="${bg.text}" opacity="0.85">${caption}</text>` : ''}` : '';
     const sizeAttr = size ? `width="${size}" height="${size}"` : '';
-    return `<svg xmlns="${NS}" viewBox="0 0 1080 1080" ${sizeAttr}><rect width="1080" height="1080" fill="${bg.color}"/><circle cx="540" cy="${cy}" r="${r + 10}" fill="#FFFFFF" opacity="0.35"/>${portrait}${text}</svg>`;
+    return `<svg xmlns="${NS}" viewBox="0 0 1080 1080" ${sizeAttr}><rect width="1080" height="1080" fill="${bg.color}"/><rect x="${540 - r - 10}" y="${cy - r - 10}" width="${r * 2 + 20}" height="${r * 2 + 20}" rx="${(r + 10) * RADIUS / 113 * 2}" fill="#FFFFFF" opacity="0.35"/>${portrait}${text}</svg>`;
   }
   function escapeXml(s) { return s.replace(/[<>&"']/g, ch => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[ch])); }
 
@@ -1203,7 +1201,7 @@ renderGallery();
       }
     } else {
       $('shareCard').innerHTML = cardSvg(state, card);
-      $('sharePortrait').innerHTML = portraitSvg(state, { shape: 'circle', bg: '#FFFFFF' });
+      $('sharePortrait').innerHTML = portraitSvg(state);
     }
   }
   $('cardName').addEventListener('input', e => { card.name = e.target.value; $('cardPreview').innerHTML = cardSvg(state, card); });
@@ -1227,10 +1225,10 @@ renderGallery();
     try {
       if (kind === 'card-png') download(await svgToPng(cardSvg(state, card, 1080), 1080), slug() + '-card.png');
       if (kind === 'card-svg') download(new Blob([cardSvg(state, card)], { type: 'image/svg+xml' }), slug() + '-card.svg');
-      if (kind === 'portrait-png') download(await svgToPng(portraitSvg(state, { size: 1024, bg: '#FFFFFF' }), 1024), slug() + '.png');
-      if (kind === 'portrait-svg') download(new Blob([portraitSvg(state, { bg: '#FFFFFF' })], { type: 'image/svg+xml' }), slug() + '.svg');
+      if (kind === 'portrait-png') download(await svgToPng(portraitSvg(state, { size: 1024 }), 1024), slug() + '.png');
+      if (kind === 'portrait-svg') download(new Blob([portraitSvg(state)], { type: 'image/svg+xml' }), slug() + '.svg');
       if (kind === 'portrait-copy') {
-        await navigator.clipboard.writeText(portraitSvg(state, { bg: '#FFFFFF' }));
+        await navigator.clipboard.writeText(portraitSvg(state));
         const orig = btn.textContent; btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = orig, 1200);
       }
     } catch (err) {
