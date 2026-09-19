@@ -1,0 +1,9 @@
+<svg width="800" height="800" viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="800" height="800" fill="white"/>
+<rect x="317.485" y="347.349" width="117.81" height="216.006" rx="20" transform="rotate(-21.5091 317.485 347.349)" fill="#9D65F7" stroke="#080015" stroke-width="8"/>
+<circle cx="356" cy="365" r="12" fill="#F3EDFD" stroke="#080015" stroke-width="8"/>
+<circle cx="372" cy="400" r="12" fill="#F3EDFD" stroke="#080015" stroke-width="8"/>
+<circle cx="394" cy="368" r="12" fill="#F3EDFD" stroke="#080015" stroke-width="8"/>
+<path d="M574.003 348.001C678 451 538.591 450.674 451.174 427.76M418.052 417.416C428.963 421.416 440.042 424.842 451.174 427.76M451.174 427.76C447.923 421.909 437.966 408.122 424.145 399.781M451.174 427.76C446.032 431.656 430.872 438.911 411.37 436.759" stroke="#080015" stroke-width="8" stroke-linecap="round"/>
+<path d="M208.495 449.39C195.496 582.502 308.949 532.025 377.534 473.179M402.794 449.389C394.732 457.758 386.268 465.685 377.534 473.179M377.534 473.179C377.898 466.496 380.821 449.742 389.601 436.195M377.534 473.179C383.863 474.434 400.669 474.326 417.264 463.859" stroke="#080015" stroke-width="8" stroke-linecap="round"/>
+</svg>
