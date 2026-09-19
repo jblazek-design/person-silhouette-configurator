@@ -199,6 +199,16 @@
   .share-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: start; }
   .share-all { display: flex; justify-content: center; margin-top: 24px; }
   .share-all .f-btn.primary { padding: 12px 22px; font-size: 14px; }
+  .share-mail { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+  .share-mail input[type=email] {
+    font: inherit; font-size: 14px; padding: 10px 14px; border-radius: 999px; width: 260px; max-width: 100%;
+    border: 1px solid var(--disabled); background: var(--panel); color: var(--ink); outline: none;
+  }
+  .share-mail input[type=email]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .share-mail .f-btn { padding: 10px 18px; }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+  .share-status { text-align: center; font-size: 12px; color: var(--muted); margin-top: 8px; min-height: 16px; }
+  .share-status.error { color: #C0261E; }
   .share-card h3 { margin: 12px 0 2px; font-size: 14px; font-weight: 600; }
   .share-card p { margin: 0 0 12px; font-size: 12px; color: var(--muted); }
   .share-card .row-btns { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -347,7 +357,17 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg>
           Download all (ZIP)
         </button>
+        <button class="f-btn" id="shareBtn" hidden style="margin-left:8px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4"/><path d="m8 8 4-4 4 4"/><path d="M5 12v7h14v-7"/></svg>
+          Share…
+        </button>
       </div>
+      <form class="share-mail" id="mailForm" novalidate>
+        <input type="email" id="mailTo" placeholder="your@email.com" autocomplete="email" maxlength="254" required>
+        <input type="text" id="mailWebsite" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <button class="f-btn primary" id="mailSend" type="submit">Send to email</button>
+      </form>
+      <div class="share-status" id="mailStatus" role="status"></div>
     </div>
   </div>
 </section>
@@ -398,8 +418,9 @@
   const DEFAULT_TONE = Math.max(0, P.tones.indexOf(P.body));
 
   const BGS = [
-    { key: 'lavender', label: 'Lavender', color: '#EDE7FA', text: INK },
+    { key: 'violet',   label: 'Violet',   color: '#9D65F7', text: INK },
     { key: 'purple',   label: 'Purple',   color: '#7C21FF', text: '#FFFFFF' },
+    { key: 'lavender', label: 'Lavender', color: '#EDE7FA', text: INK },
     { key: 'yellow',   label: 'Yellow',   color: '#FFD447', text: INK },
     { key: 'white',    label: 'White',    color: '#FFFFFF', text: INK },
     { key: 'dark',     label: 'Dark',     color: '#080015', text: '#FFFFFF' }
@@ -411,7 +432,7 @@
 
   // ---- state ----
   const state = { shape: 1, tone: DEFAULT_TONE, legs: 1, eyes: 1, hands: 0, hat: 0, pet: 0 };
-  const card = { name: '', caption: '', bg: 'lavender' };
+  const card = { name: '', caption: '', bg: 'violet' };
   let activeCat = 'eyes';
   let history = [], future = [];
 
@@ -544,22 +565,26 @@
   // Shrink long headlines so they stay inside the artwork (≈0.55em per character).
   const fitSize = (text, max, width) => Math.min(max, Math.floor(width / Math.max(1, text.length * 0.55)));
 
-  // Instagram story: 1080x1920, coloured background, rounded character frame (800 px, like the
-  // Socialmind story template), name above and caption below. width sets the export size.
+  // Instagram story: 1080x1920 like the Socialmind story template — headline artwork at the
+  // top (assets/story-title.svg), rounded 800 px character frame, name + caption below it.
+  // width sets the export size.
   function storySvg(st, c, width, fontStyle) {
-    const W = 1080, H = 1920, S = 800, X = 140, Y = 528;
+    const W = 1080, H = 1920, S = 800, X = 140, Y = 528, TITLE_Y = 240;
     const bg = BGS.find(b => b.key === c.bg) || BGS[0];
     const name = escapeXml(c.name.trim());
     const caption = escapeXml(c.caption.trim());
     const portrait = portraitSvg(st).replace('<svg ', `<svg x="${X}" y="${Y}" width="${S}" height="${S}" `);
+    const t = P.storyTitle;
+    const title = t ? `<g transform="translate(${(W - t.w) / 2} ${TITLE_Y})">${layer(t.svg, 's' + (++idSeq) + '-', INK)}</g>` : '';
     const fontHead = `font-family="Recoleta, Georgia, serif"`;
     const fontBody = `font-family="Mabry Pro, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif"`;
-    const text = (name ? `<text x="540" y="${Y - 96}" text-anchor="middle" ${fontHead} font-size="${fitSize(c.name.trim(), 88, 960)}" font-weight="600" fill="${bg.text}">${name}</text>` : '')
-      + (caption ? `<text x="540" y="${Y + S + 120}" text-anchor="middle" ${fontBody} font-size="${fitSize(c.caption.trim(), 46, 960)}" font-weight="500" fill="${bg.text}" opacity="0.85">${caption}</text>` : '');
+    const nameY = Y + S + 124, captionY = name ? nameY + 74 : nameY;
+    const text = (name ? `<text x="540" y="${nameY}" text-anchor="middle" ${fontHead} font-size="${fitSize(c.name.trim(), 76, 960)}" font-weight="600" fill="${bg.text}">${name}</text>` : '')
+      + (caption ? `<text x="540" y="${captionY}" text-anchor="middle" ${fontBody} font-size="${fitSize(c.caption.trim(), 42, 960)}" font-weight="500" fill="${bg.text}" opacity="0.85">${caption}</text>` : '');
     const fonts = (name || caption) && fontStyle ? fontStyle : '';
     const sizeAttr = width ? `width="${width}" height="${Math.round(width * H / W)}"` : '';
     const haloR = (S + 20) * RADIUS / F;
-    return `<svg xmlns="${NS}" viewBox="0 0 ${W} ${H}" ${sizeAttr}>${fonts}<rect width="${W}" height="${H}" fill="${bg.color}"/><rect x="${X - 10}" y="${Y - 10}" width="${S + 20}" height="${S + 20}" rx="${haloR}" fill="#FFFFFF" opacity="0.35"/>${portrait}${text}</svg>`;
+    return `<svg xmlns="${NS}" viewBox="0 0 ${W} ${H}" ${sizeAttr}>${fonts}<rect width="${W}" height="${H}" fill="${bg.color}"/>${title}<rect x="${X - 10}" y="${Y - 10}" width="${S + 20}" height="${S + 20}" rx="${haloR}" fill="#FFFFFF" opacity="0.35"/>${portrait}${text}</svg>`;
   }
 
   // ---- history ----
@@ -832,6 +857,70 @@
       alert('Export failed: ' + err.message);
     }
   });
+
+  // ---- email / share the pack ----
+  // PNGs only: enough for sharing and keeps the mail small.
+  async function packPngs() {
+    const fonts = await fontCss();
+    return [
+      { name: 'story.png', blob: await svgToPng(storySvg(state, card, 1080, fonts), 1080, 1920) },
+      { name: 'post.png', blob: await svgToPng(cardSvg(state, card, 1080, fonts), 1080) },
+      { name: 'character.png', blob: await svgToPng(portraitSvg(state, { size: 1024 }), 1024) }
+    ];
+  }
+  async function toBase64(blob) {
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let s = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(s);
+  }
+  function mailStatus(msg, isError) {
+    const el = $('mailStatus');
+    el.textContent = msg;
+    el.classList.toggle('error', !!isError);
+  }
+  $('mailForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = $('mailTo').value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { mailStatus('Please enter a valid email address.', true); $('mailTo').focus(); return; }
+    const btn = $('mailSend');
+    btn.disabled = true; mailStatus('Sending…');
+    try {
+      const files = await Promise.all((await packPngs()).map(async f => ({ name: f.name, content: await toBase64(f.blob) })));
+      const res = await fetch('api/send', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name: card.name.trim(), website: $('mailWebsite').value, files })
+      });
+      let data = null;
+      try { data = await res.json(); } catch (_) { /* not JSON → no API here */ }
+      if (res.ok && data && data.ok) { mailStatus('Sent! Check your inbox.'); $('mailTo').value = ''; }
+      else mailStatus((data && data.error) || 'Email isn\'t set up on this server yet.', true);
+    } catch (err) {
+      console.error(err);
+      mailStatus('Sending failed: ' + err.message, true);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+  // Native share sheet (phones: straight into Instagram, WhatsApp, Mail…) when the browser supports file sharing.
+  (function () {
+    let probe = null;
+    try { probe = new File([new Uint8Array([137, 80, 78, 71])], 'x.png', { type: 'image/png' }); } catch (_) { return; }
+    if (!(navigator.canShare && navigator.canShare({ files: [probe] }))) return;
+    const btn = $('shareBtn');
+    btn.hidden = false;
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      try {
+        const files = (await packPngs()).map(f => new File([f.blob], f.name, { type: 'image/png' }));
+        await navigator.share({ files, title: 'My Socialmind character' });
+      } catch (err) {
+        if (err && err.name !== 'AbortError') { console.error(err); toast('Sharing failed'); }
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  })();
 
   // ---- generator controls ----
   $('catShuffle').addEventListener('click', () => {
