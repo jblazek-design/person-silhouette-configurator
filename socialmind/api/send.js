@@ -1,17 +1,23 @@
 // Vercel serverless function: emails the generated pack (PNG attachments) through Resend.
 // Env vars (Vercel → Project → Settings → Environment Variables):
 //   RESEND_API_KEY  required — from resend.com (or the Resend integration in the Vercel Marketplace)
-//   MAIL_FROM       sender, e.g. "Socialmind <hello@socialmind.cz>" (domain must be verified in Resend;
-//                   the default onboarding@resend.dev only delivers to the Resend account owner)
+//   MAIL_FROM       sender, e.g. "Socialmind <hello@socialmind.cz>" (domain must be verified in Resend).
+//                   Default: hello@RESEND_EMAIL_DOMAIN (domain provisioned by the Vercel integration),
+//                   else onboarding@resend.dev, which only delivers to the Resend account owner.
 //   MAIL_BCC        optional — a copy of every mail, handy for collecting leads
 const MAX_ATTACH_CHARS = 4 * 1024 * 1024; // base64 characters across all attachments (~3 MB)
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const FILE_RE = /^[a-z0-9][a-z0-9._-]{0,60}\.png$/i;
 
+const senderDefault = () => process.env.MAIL_FROM
+  || (process.env.RESEND_EMAIL_DOMAIN ? `Socialmind <hello@${process.env.RESEND_EMAIL_DOMAIN}>` : 'Socialmind <onboarding@resend.dev>');
+
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   const key = process.env.RESEND_API_KEY;
+  // GET = health check (no secrets): is mail configured and which sender is used
+  if (req.method === 'GET') return res.status(200).json({ configured: !!key, from: key ? senderDefault() : null });
+  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   if (!key) return res.status(503).json({ error: 'Email isn\'t set up on this server yet.' });
 
   let body = req.body;
@@ -31,7 +37,7 @@ module.exports = async (req, res) => {
     attachments.push({ filename: f.name, content: f.content });
   }
 
-  const from = process.env.MAIL_FROM || 'Socialmind <onboarding@resend.dev>';
+  const from = senderDefault();
   const safeName = String(name || '').slice(0, 60).replace(/[<>&"']/g, '');
   const payload = {
     from,
