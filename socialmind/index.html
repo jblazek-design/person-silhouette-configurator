@@ -50,7 +50,8 @@
     border-bottom: 1px solid var(--line);
     color: var(--ink);
   }
-  .brand { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+  .brand { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; border: none; background: none; padding: 6px 8px; margin-left: -8px; border-radius: 8px; color: inherit; cursor: pointer; }
+  .brand:hover { background: var(--neutral); }
   .brand svg { width: 28px; height: 28px; display: block; }
   .brand .app-name { color: var(--muted); font-weight: 500; }
   .brand .app-name::before { content: "·"; margin: 0 6px 0 0; }
@@ -240,11 +241,11 @@
 <body>
 
 <header class="topbar">
-  <div class="brand">
+  <button class="brand" id="brandHome" type="button" title="Back to the editor">
     <span id="brandMark" aria-hidden="true"></span>
     <span class="wordmark">Socialmind</span>
     <span class="app-name">Character Generator</span>
-  </div>
+  </button>
   <div class="topbar-right">
     <button class="f-btn" id="saveBtn">Save <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3l5 5-5 5"/></svg></button>
   </div>
@@ -943,6 +944,8 @@
   $('redoBtn').addEventListener('click', redo);
   $('clearBtn').addEventListener('click', () => commit({ legs: 0, eyes: 0, hands: 0, hat: 0, pet: 0 }));
   $('saveBtn').addEventListener('click', openSave);
+  // logo = home: from the save flow back to the editor
+  $('brandHome').addEventListener('click', () => { if (currentView !== 'portrait') showView('portrait'); });
 
   document.addEventListener('keydown', (e) => {
     if (currentView !== 'portrait') return;
