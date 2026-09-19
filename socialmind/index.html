@@ -196,12 +196,15 @@
   .swatch[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 0 0 2px #fff inset; }
   .save-form .f-btn.primary { margin-top: auto; border-radius: 8px; padding: 12px; font-size: 14px; }
 
-  .share-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .share-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: start; }
+  .share-all { display: flex; justify-content: center; margin-top: 24px; }
+  .share-all .f-btn.primary { padding: 12px 22px; font-size: 14px; }
   .share-card h3 { margin: 12px 0 2px; font-size: 14px; font-weight: 600; }
   .share-card p { margin: 0 0 12px; font-size: 12px; color: var(--muted); }
   .share-card .row-btns { display: flex; gap: 8px; flex-wrap: wrap; }
   .share-card .f-btn { border-radius: 8px; padding: 9px 14px; }
   .share-preview { border-radius: 10px; overflow: hidden; aspect-ratio: 1 / 1; background: var(--neutral); border: 1px solid var(--line); }
+  .share-preview.story { aspect-ratio: 9 / 16; }
   .share-preview svg { width: 100%; height: 100%; display: block; }
 
   @media (max-width: 960px) {
@@ -308,25 +311,42 @@
       </div>
     </div>
 
-    <div class="share-cards" id="saveStep2" hidden>
-      <div class="share-card">
-        <div class="share-preview" id="shareCard"></div>
-        <h3>Customised</h3>
-        <p>For sharing on social media</p>
-        <div class="row-btns">
-          <button class="f-btn primary" data-dl="card-png">Download PNG</button>
-          <button class="f-btn" data-dl="card-svg">SVG</button>
+    <div id="saveStep2" hidden>
+      <div class="share-cards">
+        <div class="share-card">
+          <div class="share-preview" id="shareCard"></div>
+          <h3>Post</h3>
+          <p>Square, for feeds and LinkedIn</p>
+          <div class="row-btns">
+            <button class="f-btn primary" data-dl="card-png">Download PNG</button>
+            <button class="f-btn" data-dl="card-svg">SVG</button>
+          </div>
+        </div>
+        <div class="share-card">
+          <div class="share-preview story" id="shareStory"></div>
+          <h3>Story</h3>
+          <p>9:16 for Instagram stories</p>
+          <div class="row-btns">
+            <button class="f-btn primary" data-dl="story-png">Download PNG</button>
+            <button class="f-btn" data-dl="story-svg">SVG</button>
+          </div>
+        </div>
+        <div class="share-card">
+          <div class="share-preview" id="sharePortrait"></div>
+          <h3>Character only</h3>
+          <p>Perfect for profile photos</p>
+          <div class="row-btns">
+            <button class="f-btn primary" data-dl="portrait-png">Download PNG</button>
+            <button class="f-btn" data-dl="portrait-svg">SVG</button>
+            <button class="f-btn" data-dl="portrait-copy">Copy SVG</button>
+          </div>
         </div>
       </div>
-      <div class="share-card">
-        <div class="share-preview" id="sharePortrait"></div>
-        <h3>Character only</h3>
-        <p>Perfect for profile photos</p>
-        <div class="row-btns">
-          <button class="f-btn primary" data-dl="portrait-png">Download PNG</button>
-          <button class="f-btn" data-dl="portrait-svg">SVG</button>
-          <button class="f-btn" data-dl="portrait-copy">Copy SVG</button>
-        </div>
+      <div class="share-all">
+        <button class="f-btn primary" data-dl="all">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg>
+          Download all (ZIP)
+        </button>
       </div>
     </div>
   </div>
@@ -513,7 +533,7 @@
     const fontHead = `font-family="Recoleta, Georgia, serif"`;
     const fontBody = `font-family="Mabry Pro, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif"`;
     const text = hasText ? `
-      ${name ? `<text x="540" y="${caption ? 850 : 880}" text-anchor="middle" ${fontHead} font-size="60" font-weight="600" fill="${bg.text}">${name}</text>` : ''}
+      ${name ? `<text x="540" y="${caption ? 850 : 880}" text-anchor="middle" ${fontHead} font-size="${fitSize(c.name.trim(), 60, 960)}" font-weight="600" fill="${bg.text}">${name}</text>` : ''}
       ${caption ? `<text x="540" y="${name ? 920 : 880}" text-anchor="middle" ${fontBody} font-size="34" font-weight="500" fill="${bg.text}" opacity="0.85">${caption}</text>` : ''}` : '';
     const fonts = hasText && fontStyle ? fontStyle : '';
     const sizeAttr = size ? `width="${size}" height="${size}"` : '';
@@ -521,6 +541,26 @@
     return `<svg xmlns="${NS}" viewBox="0 0 1080 1080" ${sizeAttr}>${fonts}<rect width="1080" height="1080" fill="${bg.color}"/><rect x="${540 - r - 10}" y="${cy - r - 10}" width="${r * 2 + 20}" height="${r * 2 + 20}" rx="${haloR}" fill="#FFFFFF" opacity="0.35"/>${portrait}${text}</svg>`;
   }
   function escapeXml(s) { return s.replace(/[<>&"']/g, ch => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[ch])); }
+  // Shrink long headlines so they stay inside the artwork (≈0.55em per character).
+  const fitSize = (text, max, width) => Math.min(max, Math.floor(width / Math.max(1, text.length * 0.55)));
+
+  // Instagram story: 1080x1920, coloured background, rounded character frame (800 px, like the
+  // Socialmind story template), name above and caption below. width sets the export size.
+  function storySvg(st, c, width, fontStyle) {
+    const W = 1080, H = 1920, S = 800, X = 140, Y = 528;
+    const bg = BGS.find(b => b.key === c.bg) || BGS[0];
+    const name = escapeXml(c.name.trim());
+    const caption = escapeXml(c.caption.trim());
+    const portrait = portraitSvg(st).replace('<svg ', `<svg x="${X}" y="${Y}" width="${S}" height="${S}" `);
+    const fontHead = `font-family="Recoleta, Georgia, serif"`;
+    const fontBody = `font-family="Mabry Pro, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif"`;
+    const text = (name ? `<text x="540" y="${Y - 96}" text-anchor="middle" ${fontHead} font-size="${fitSize(c.name.trim(), 88, 960)}" font-weight="600" fill="${bg.text}">${name}</text>` : '')
+      + (caption ? `<text x="540" y="${Y + S + 120}" text-anchor="middle" ${fontBody} font-size="${fitSize(c.caption.trim(), 46, 960)}" font-weight="500" fill="${bg.text}" opacity="0.85">${caption}</text>` : '');
+    const fonts = (name || caption) && fontStyle ? fontStyle : '';
+    const sizeAttr = width ? `width="${width}" height="${Math.round(width * H / W)}"` : '';
+    const haloR = (S + 20) * RADIUS / F;
+    return `<svg xmlns="${NS}" viewBox="0 0 ${W} ${H}" ${sizeAttr}>${fonts}<rect width="${W}" height="${H}" fill="${bg.color}"/><rect x="${X - 10}" y="${Y - 10}" width="${S + 20}" height="${S + 20}" rx="${haloR}" fill="#FFFFFF" opacity="0.35"/>${portrait}${text}</svg>`;
+  }
 
   // ---- history ----
   function commit(patch) {
@@ -642,15 +682,15 @@
     a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-  function svgToPng(svg, size) {
+  function svgToPng(svg, w, h = w) {
     return new Promise((resolve, reject) => {
       const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const img = new Image();
       img.onload = () => {
         const c = document.createElement('canvas');
-        c.width = c.height = size;
-        c.getContext('2d').drawImage(img, 0, 0, size, size);
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
         URL.revokeObjectURL(url);
         c.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png');
       };
@@ -659,6 +699,30 @@
     });
   }
   const slug = () => 'socialmind-' + encodeState().replace(/\./g, '-');
+
+  // Minimal ZIP writer (stored, no compression) — enough for a handful of PNG/SVG files.
+  function zipBlob(files) {
+    const enc = new TextEncoder();
+    const table = new Uint32Array(256).map((_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
+    const crc32 = (u8) => { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = table[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+    const le16 = (n) => [n & 255, (n >>> 8) & 255];
+    const le32 = (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
+    const d = new Date();
+    const dosTime = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+    const dosDate = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+    const local = [], central = [];
+    let offset = 0;
+    for (const f of files) {
+      const name = enc.encode(f.name), crc = crc32(f.data), size = f.data.length;
+      const head = new Uint8Array([0x50, 0x4B, 3, 4, ...le16(20), ...le16(0x0800), ...le16(0), ...le16(dosTime), ...le16(dosDate), ...le32(crc), ...le32(size), ...le32(size), ...le16(name.length), ...le16(0)]);
+      local.push(head, name, f.data);
+      central.push(new Uint8Array([0x50, 0x4B, 1, 2, ...le16(20), ...le16(20), ...le16(0x0800), ...le16(0), ...le16(dosTime), ...le16(dosDate), ...le32(crc), ...le32(size), ...le32(size), ...le16(name.length), ...le16(0), ...le16(0), ...le16(0), ...le16(0), ...le32(0), ...le32(offset)]), name);
+      offset += head.length + name.length + size;
+    }
+    const cdSize = central.reduce((s, u) => s + u.length, 0);
+    const end = new Uint8Array([0x50, 0x4B, 5, 6, ...le16(0), ...le16(0), ...le16(files.length), ...le16(files.length), ...le32(cdSize), ...le32(offset), ...le16(0)]);
+    return new Blob([...local, ...central, end], { type: 'application/zip' });
+  }
 
   // Brand fonts embedded as data URIs for the card exports (fetched once, cached).
   const FONTS = [
@@ -710,6 +774,7 @@
       }
     } else {
       $('shareCard').innerHTML = cardSvg(state, card);
+      $('shareStory').innerHTML = storySvg(state, card);
       $('sharePortrait').innerHTML = portraitSvg(state);
     }
   }
@@ -739,6 +804,28 @@
       if (kind === 'portrait-copy') {
         await navigator.clipboard.writeText(portraitSvg(state));
         const orig = btn.textContent; btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = orig, 1200);
+      }
+      if (kind === 'story-png') download(await svgToPng(storySvg(state, card, 1080, await fontCss()), 1080, 1920), slug() + '-story.png');
+      if (kind === 'story-svg') download(new Blob([storySvg(state, card, 0, await fontCss())], { type: 'image/svg+xml' }), slug() + '-story.svg');
+      if (kind === 'all') {
+        const orig = btn.innerHTML;
+        btn.disabled = true; btn.textContent = 'Preparing…';
+        try {
+          const fonts = await fontCss();
+          const bytes = async (blob) => new Uint8Array(await blob.arrayBuffer());
+          const text = (s) => new TextEncoder().encode(s);
+          const files = [
+            { name: 'character.png', data: await bytes(await svgToPng(portraitSvg(state, { size: 1024 }), 1024)) },
+            { name: 'character.svg', data: text(portraitSvg(state)) },
+            { name: 'post.png', data: await bytes(await svgToPng(cardSvg(state, card, 1080, fonts), 1080)) },
+            { name: 'post.svg', data: text(cardSvg(state, card, 0, fonts)) },
+            { name: 'story.png', data: await bytes(await svgToPng(storySvg(state, card, 1080, fonts), 1080, 1920)) },
+            { name: 'story.svg', data: text(storySvg(state, card, 0, fonts)) }
+          ];
+          download(zipBlob(files), slug() + '-pack.zip');
+        } finally {
+          btn.disabled = false; btn.innerHTML = orig;
+        }
       }
     } catch (err) {
       console.error(err);
