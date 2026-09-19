@@ -9,14 +9,31 @@ const MAX_ATTACH_CHARS = 4 * 1024 * 1024; // base64 characters across all attach
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const FILE_RE = /^[a-z0-9][a-z0-9._-]{0,60}\.png$/i;
 
+let domainCache = null;
 const senderDefault = () => process.env.MAIL_FROM
   || (process.env.RESEND_EMAIL_DOMAIN ? `Socialmind <hello@${process.env.RESEND_EMAIL_DOMAIN}>` : 'Socialmind <onboarding@resend.dev>');
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   const key = process.env.RESEND_API_KEY;
-  // GET = health check (no secrets): is mail configured and which sender is used
-  if (req.method === 'GET') return res.status(200).json({ configured: !!key, from: key ? senderDefault() : null });
+  // GET = health check (no secrets): is mail configured, which sender is used and whether the
+  // sending domain is verified in Resend (checked at most once a minute)
+  if (req.method === 'GET') {
+    let domain = null;
+    const name = process.env.RESEND_EMAIL_DOMAIN;
+    if (key && name) {
+      if (!domainCache || Date.now() - domainCache.at > 60000) {
+        try {
+          const r = await fetch('https://api.resend.com/domains', { headers: { Authorization: `Bearer ${key}` } });
+          const list = r.ok ? (await r.json()).data || [] : [];
+          const d = list.find(x => x.name === name);
+          domainCache = { at: Date.now(), value: d ? { name: d.name, status: d.status } : { name, status: 'unknown' } };
+        } catch (_) { domainCache = { at: Date.now(), value: { name, status: 'unknown' } }; }
+      }
+      domain = domainCache.value;
+    }
+    return res.status(200).json({ configured: !!key, from: key ? senderDefault() : null, domain });
+  }
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   if (!key) return res.status(503).json({ error: 'Email isn\'t set up on this server yet.' });
 
